@@ -33,6 +33,7 @@
   </p>
 
   <script>
+    const ORS_API_KEY = "eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImY5ZDRiMDg1N2VkYTQyNjRhODUzMzk0NGY3MWNlNDg1IiwiaCI6Im11cm11cjY0In0=";
     // 地図を初期化（仮で東京駅）
     const map = L.map("map").setView([35.681236, 139.767125], 15);
 
@@ -56,60 +57,73 @@ let routeLine;
   }
 
   navigator.geolocation.getCurrentPosition(
-        (position) => {
-  const lat = position.coords.latitude;
-  const lng = position.coords.longitude;
+  (position) => {
+    const lat = position.coords.latitude;
+    const lng = position.coords.longitude;
 
-  map.setView([lat, lng], 16);
+    map.setView([lat, lng], 16);
 
-  // ピン
-  if (marker) {
-    marker.setLatLng([lat, lng]);
-  } else {
-    marker = L.marker([lat, lng]).addTo(map);
+    // ピン
+    if (marker) {
+      marker.setLatLng([lat, lng]);
+    } else {
+      marker = L.marker([lat, lng]).addTo(map);
+    }
+
+    // 散歩時間
+    const minutes = Number(document.getElementById("walkTime").value);
+    const totalDistance = minutes * 80;
+    const segment = totalDistance / 4;
+
+    // ===== ランダムポイント生成 =====
+    const points = [];
+    let currentLat = lat;
+    let currentLng = lng;
+
+    points.push([lat, lng]);
+
+    for (let i = 0; i < 3; i++) {
+      const angle = Math.random() * 2 * Math.PI;
+      const dx = (segment * Math.cos(angle)) / 111000;
+      const dy = (segment * Math.sin(angle)) / 111000;
+
+      currentLat += dy;
+      currentLng += dx;
+      points.push([currentLat, currentLng]);
+    }
+
+    // 最後はスタートに戻る
+    points.push([lat, lng]);
+
+    // ===== ORSに送る =====
+    fetch("https://api.openrouteservice.org/v2/directions/foot-walking/geojson", {
+      method: "POST",
+      headers: {
+        "Authorization": ORS_API_KEY,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        coordinates: points.map(p => [p[1], p[0]]), // lng, lat
+      }),
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (routeLine) {
+          map.removeLayer(routeLine);
+        }
+
+        routeLine = L.geoJSON(data, {
+          style: {
+            color: "blue",
+            weight: 4,
+          },
+        }).addTo(map);
+      });
+
+    button.textContent = "ルートを作る";
+  },
+  () => {
+    alert("位置情報の取得が許可されていません");
+    button.textContent = "ルートを作る";
   }
-
-  // 散歩時間
-  const minutes = Number(document.getElementById("walkTime").value);
-  const totalDistance = minutes * 80;
-
-  // 4分割
-  const segment = totalDistance / 4;
-
-  const points = [];
-  let currentLat = lat;
-  let currentLng = lng;
-
-  points.push([currentLat, currentLng]);
-
-  for (let i = 0; i < 3; i++) {
-    const angle = Math.random() * 2 * Math.PI;
-    const dx = (segment * Math.cos(angle)) / 111000;
-    const dy = (segment * Math.sin(angle)) / 111000;
-
-    currentLat += dy;
-    currentLng += dx;
-
-    points.push([currentLat, currentLng]);
-  }
-
-  // 最後はスタートに戻る
-  points.push([lat, lng]);
-
-  // 既存ルート削除
-  if (routeLine) {
-    map.removeLayer(routeLine);
-  }
-
-  routeLine = L.polyline(points, {
-    color: "blue",
-    weight: 4,
-  }).addTo(map);
-
-  button.textContent = "ルートを作る";
-},
-      );
-    });
-  </script>
-</body>
-</html>
+);
