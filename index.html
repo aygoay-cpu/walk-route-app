@@ -4,7 +4,20 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>散歩ルートアプリ</title>
-</head>
+</head> 
+  <link
+  rel="stylesheet"
+  href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+/>
+  <script>
+  const map = L.map("map").setView([35.681236, 139.767125], 15);
+
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution: "© OpenStreetMap contributors",
+  }).addTo(map);
+
+  let marker;
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <body>
   <h1>🚶‍♀️ 散歩ルートアプリ</h1>
   <p>現在地から散歩ルートを作るアプリ</p>
@@ -16,6 +29,8 @@
 
   <br /><br />
 
+  <div id="map" style="height: 300px; margin-bottom: 20px;"></div>
+  
   <button id="makeRoute">ルートを作る</button>
 
 <p style="margin-top:20px; color:gray;">
@@ -33,8 +48,17 @@
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        const lat = position.coords.latitude;
-        const lng = position.coords.longitude;
+  const lat = position.coords.latitude;
+  const lng = position.coords.longitude;
+
+  map.setView([lat, lng], 16);
+
+  if (marker) {
+    marker.setLatLng([lat, lng]);
+  } else {
+    marker = L.marker([lat, lng]).addTo(map);
+  }
+},
 
         alert(`現在地を取得しました！\n緯度: ${lat}\n経度: ${lng}`);
       },
