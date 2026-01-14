@@ -22,3 +22,28 @@
   </p>
 </body>
 </html>
+
+
+<script>
+  const button = document.getElementById("makeRoute");
+
+  button.addEventListener("click", () => {
+    if (!navigator.geolocation) {
+      alert("この端末では現在地が取得できません");
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+
+        alert(`現在地を取得しました！\n緯度: ${lat}\n経度: ${lng}`);
+      },
+      () => {
+        alert("位置情報の取得が許可されていません");
+      }
+    );
+  });
+</script>
+
