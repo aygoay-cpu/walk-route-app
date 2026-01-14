@@ -45,27 +45,33 @@
     const button = document.getElementById("makeRoute");
 
     button.addEventListener("click", () => {
-      if (!navigator.geolocation) {
-        alert("この端末では現在地が取得できません");
-        return;
-      }
+  button.textContent = "現在地を取得中…";
 
-      navigator.geolocation.getCurrentPosition(
+  if (!navigator.geolocation) {
+    alert("この端末では現在地が取得できません");
+    button.textContent = "ルートを作る";
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(
         (position) => {
-          const lat = position.coords.latitude;
-          const lng = position.coords.longitude;
+  const lat = position.coords.latitude;
+  const lng = position.coords.longitude;
 
-          map.setView([lat, lng], 16);
+  map.setView([lat, lng], 16);
 
-          if (marker) {
-            marker.setLatLng([lat, lng]);
-          } else {
-            marker = L.marker([lat, lng]).addTo(map);
-          }
-        },
+  if (marker) {
+    marker.setLatLng([lat, lng]);
+  } else {
+    marker = L.marker([lat, lng]).addTo(map);
+  }
+
+  button.textContent = "ルートを作る";
+},
         () => {
-          alert("位置情報の取得が許可されていません");
-        }
+  alert("位置情報の取得が許可されていません");
+  button.textContent = "ルートを作る";
+}
       );
     });
   </script>
