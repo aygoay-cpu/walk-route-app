@@ -4,20 +4,15 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>散歩ルートアプリ</title>
-</head> 
+
+  <!-- Leaflet -->
   <link
-  rel="stylesheet"
-  href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-/>
-  <script>
-  const map = L.map("map").setView([35.681236, 139.767125], 15);
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+</head>
 
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    attribution: "© OpenStreetMap contributors",
-  }).addTo(map);
-
-  let marker;
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <body>
   <h1>🚶‍♀️ 散歩ルートアプリ</h1>
   <p>現在地から散歩ルートを作るアプリ</p>
@@ -30,44 +25,49 @@
   <br /><br />
 
   <div id="map" style="height: 300px; margin-bottom: 20px;"></div>
-  
+
   <button id="makeRoute">ルートを作る</button>
 
-<p style="margin-top:20px; color:gray;">
-  ※ まだ地図は出ません（次でやる）
-</p>
+  <p style="margin-top:20px; color:gray;">
+    ※ 現在地を地図に表示します
+  </p>
 
-<script>
-  const button = document.getElementById("makeRoute");
+  <script>
+    // 地図を初期化（仮で東京駅）
+    const map = L.map("map").setView([35.681236, 139.767125], 15);
 
-  button.addEventListener("click", () => {
-    if (!navigator.geolocation) {
-      alert("この端末では現在地が取得できません");
-      return;
-    }
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: "© OpenStreetMap contributors",
+    }).addTo(map);
 
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-  const lat = position.coords.latitude;
-  const lng = position.coords.longitude;
+    let marker;
 
-  map.setView([lat, lng], 16);
+    const button = document.getElementById("makeRoute");
 
-  if (marker) {
-    marker.setLatLng([lat, lng]);
-  } else {
-    marker = L.marker([lat, lng]).addTo(map);
-  }
-},
-
-        alert(`現在地を取得しました！\n緯度: ${lat}\n経度: ${lng}`);
-      },
-      () => {
-        alert("位置情報の取得が許可されていません");
+    button.addEventListener("click", () => {
+      if (!navigator.geolocation) {
+        alert("この端末では現在地が取得できません");
+        return;
       }
-    );
-  });
-</script>
 
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
+
+          map.setView([lat, lng], 16);
+
+          if (marker) {
+            marker.setLatLng([lat, lng]);
+          } else {
+            marker = L.marker([lat, lng]).addTo(map);
+          }
+        },
+        () => {
+          alert("位置情報の取得が許可されていません");
+        }
+      );
+    });
+  </script>
 </body>
 </html>
