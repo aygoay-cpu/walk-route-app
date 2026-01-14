@@ -11,11 +11,22 @@
     href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
   />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 10px;
+    }
+    #map {
+      height: 300px;
+      margin-top: 10px;
+    }
+  </style>
 </head>
 
 <body>
   <h1>🚶‍♀️ 散歩ルートアプリ</h1>
-  <p>現在地から散歩ルートを作るアプリ</p>
+  <p>現在地から散歩ルートを作ります</p>
 
   <label>
     散歩時間（分）：
@@ -24,110 +35,124 @@
 
   <br /><br />
 
-  <div id="map" style="height: 300px; margin-bottom: 20px;"></div>
-
   <button id="makeRoute">ルートを作る</button>
 
-  <p style="margin-top:20px; color:gray;">
-    ※ 現在地を地図に表示します
-  </p>
+  <div id="map"></div>
 
   <script>
-    const ORS_API_KEY = "eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImY5ZDRiMDg1N2VkYTQyNjRhODUzMzk0NGY3MWNlNDg1IiwiaCI6Im11cm11cjY0In0=";
-    // 地図を初期化（仮で東京駅）
+    // ==============================
+    // 設定
+    // ==============================
+    const ORS_API_KEY = "eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImY5ZDRiMDg1N2VkYTQyNjRhODUzMzk0NGY3MWNlNDg1IiwiaCI6Im11cm11cjY0In0="; // 
+
+    let marker;
+    let routeLine;
+
+    // ==============================
+    // 地図初期化
+    // ==============================
     const map = L.map("map").setView([35.681236, 139.767125], 15);
 
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution: "© OpenStreetMap contributors",
     }).addTo(map);
 
-    let marker;
-let walkCircle;
-let routeLine;
-    
     const button = document.getElementById("makeRoute");
 
+    // ==============================
+    // ボタン処理
+    // ==============================
     button.addEventListener("click", () => {
-  button.textContent = "現在地を取得中…";
+      button.textContent = "現在地を取得中…";
 
-  if (!navigator.geolocation) {
-    alert("この端末では現在地が取得できません");
-    button.textContent = "ルートを作る";
-    return;
-  }
+      if (!navigator.geolocation) {
+        alert("この端末では現在地が取得できません");
+        button.textContent = "ルートを作る";
+        return;
+      }
 
-  navigator.geolocation.getCurrentPosition(
-  (position) => {
-    const lat = position.coords.latitude;
-    const lng = position.coords.longitude;
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
 
-    map.setView([lat, lng], 16);
+          // 地図移動
+          map.setView([lat, lng], 16);
 
-    // ピン
-    if (marker) {
-      marker.setLatLng([lat, lng]);
-    } else {
-      marker = L.marker([lat, lng]).addTo(map);
-    }
+          // ピン
+          if (marker) {
+            marker.setLatLng([lat, lng]);
+          } else {
+            marker = L.marker([lat, lng]).addTo(map);
+          }
 
-    // 散歩時間
-    const minutes = Number(document.getElementById("walkTime").value);
-    const totalDistance = minutes * 80;
-    const segment = totalDistance / 4;
+          // ==============================
+          // ルート用ランダムポイント生成
+          // ==============================
+          const minutes = Number(document.getElementById("walkTime").value);
+          const totalDistance = minutes * 80; // 1分80m
+          const segment = totalDistance / 4;
 
-    // ===== ランダムポイント生成 =====
-    const points = [];
-    let currentLat = lat;
-    let currentLng = lng;
+          const points = [];
+          let currentLat = lat;
+          let currentLng = lng;
 
-    points.push([lat, lng]);
+          points.push([lat, lng]);
 
-    for (let i = 0; i < 3; i++) {
-      const angle = Math.random() * 2 * Math.PI;
-      const dx = (segment * Math.cos(angle)) / 111000;
-      const dy = (segment * Math.sin(angle)) / 111000;
+          for (let i = 0; i < 3; i++) {
+            const angle = Math.random() * 2 * Math.PI;
+            const dx = (segment * Math.cos(angle)) / 111000;
+            const dy = (segment * Math.sin(angle)) / 111000;
 
-      currentLat += dy;
-      currentLng += dx;
-      points.push([currentLat, currentLng]);
-    }
+            currentLat += dy;
+            currentLng += dx;
+            points.push([currentLat, currentLng]);
+          }
 
-    // 最後はスタートに戻る
-    points.push([lat, lng]);
+          // スタートに戻る
+          points.push([lat, lng]);
 
-    // ===== ORSに送る =====
-    fetch("https://api.openrouteservice.org/v2/directions/foot-walking/geojson", {
-      method: "POST",
-      headers: {
-        "Authorization": ORS_API_KEY,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        coordinates: points.map(p => [p[1], p[0]]), // lng, lat
-      }),
-    })
-      .then(res => res.json())
-      .then(data => {
-        if (routeLine) {
-          map.removeLayer(routeLine);
+          // ==============================
+          // ORSに送信
+          // ==============================
+          fetch(
+            "https://api.openrouteservice.org/v2/directions/foot-walking/geojson",
+            {
+              method: "POST",
+              headers: {
+                Authorization: ORS_API_KEY,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                coordinates: points.map((p) => [p[1], p[0]]), // lng, lat
+              }),
+            }
+          )
+            .then((res) => res.json())
+            .then((data) => {
+              if (routeLine) {
+                map.removeLayer(routeLine);
+              }
+
+              routeLine = L.geoJSON(data, {
+                style: {
+                  color: "blue",
+                  weight: 4,
+                },
+              }).addTo(map);
+            })
+            .catch(() => {
+              alert("ルート取得に失敗しました");
+            });
+
+          button.textContent = "ルートを作る";
+        },
+        () => {
+          alert("位置情報の取得が許可されていません");
+          button.textContent = "ルートを作る";
         }
-
-        routeLine = L.geoJSON(data, {
-          style: {
-            color: "blue",
-            weight: 4,
-          },
-        }).addTo(map);
-      });
-
-    button.textContent = "ルートを作る";
-  },
-  () => {
-    alert("位置情報の取得が許可されていません");
-    button.textContent = "ルートを作る";
-  }
-);
-</script>
+      );
+    });
+  </script>
 </body>
 </html>
-                            
