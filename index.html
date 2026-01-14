@@ -42,7 +42,8 @@
 
     let marker;
 let walkCircle;
-
+let routeLine;
+    
     const button = document.getElementById("makeRoute");
 
     button.addEventListener("click", () => {
@@ -59,7 +60,6 @@ let walkCircle;
   const lat = position.coords.latitude;
   const lng = position.coords.longitude;
 
-  // 現在地へ移動
   map.setView([lat, lng], 16);
 
   // ピン
@@ -69,35 +69,45 @@ let walkCircle;
     marker = L.marker([lat, lng]).addTo(map);
   }
 
-  // 散歩時間（分）
+  // 散歩時間
   const minutes = Number(document.getElementById("walkTime").value);
+  const totalDistance = minutes * 80;
 
-  // 歩行距離（m）: 1分=80m
-  const distance = minutes * 80;
+  // 4分割
+  const segment = totalDistance / 4;
 
-  // 円の半径 = 距離 ÷ 2π
-  const radius = distance; // ← ÷(2π) をやめる
+  const points = [];
+  let currentLat = lat;
+  let currentLng = lng;
 
-  // 既存の円を消す
-  if (walkCircle) {
-    map.removeLayer(walkCircle);
+  points.push([currentLat, currentLng]);
+
+  for (let i = 0; i < 3; i++) {
+    const angle = Math.random() * 2 * Math.PI;
+    const dx = (segment * Math.cos(angle)) / 111000;
+    const dy = (segment * Math.sin(angle)) / 111000;
+
+    currentLat += dy;
+    currentLng += dx;
+
+    points.push([currentLat, currentLng]);
   }
 
-  // 円を描く
-walkCircle = L.circle([lat, lng], {
-  radius: radius,
-  color: "red",
-  weight: 4,
-  fillColor: "red",
-  fillOpacity: 0.4,
-}).addTo(map);
+  // 最後はスタートに戻る
+  points.push([lat, lng]);
+
+  // 既存ルート削除
+  if (routeLine) {
+    map.removeLayer(routeLine);
+  }
+
+  routeLine = L.polyline(points, {
+    color: "blue",
+    weight: 4,
+  }).addTo(map);
 
   button.textContent = "ルートを作る";
 },
-        () => {
-  alert("位置情報の取得が許可されていません");
-  button.textContent = "ルートを作る";
-}
       );
     });
   </script>
