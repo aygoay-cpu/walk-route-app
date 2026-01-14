@@ -76,7 +76,7 @@ let walkCircle;
   const distance = minutes * 80;
 
   // 円の半径 = 距離 ÷ 2π
-  const radius = distance / (2 * Math.PI);
+  const radius = distance; // ← ÷(2π) をやめる
 
   // 既存の円を消す
   if (walkCircle) {
@@ -84,12 +84,13 @@ let walkCircle;
   }
 
   // 円を描く
-  walkCircle = L.circle([lat, lng], {
-    radius: radius,
-    color: "green",
-    fillColor: "green",
-    fillOpacity: 0.2,
-  }).addTo(map);
+walkCircle = L.circle([lat, lng], {
+  radius: radius,
+  color: "red",
+  weight: 4,
+  fillColor: "red",
+  fillOpacity: 0.4,
+}).addTo(map);
 
   button.textContent = "ルートを作る";
 },
