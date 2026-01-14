@@ -19,7 +19,7 @@
 
   <label>
     散歩時間（分）：
-    <input type="number" value="30" min="30" step="10" />
+    <input id="walkTime" type="number" value="30" min="30" step="10" />
   </label>
 
   <br /><br />
@@ -41,6 +41,7 @@
     }).addTo(map);
 
     let marker;
+let walkCircle;
 
     const button = document.getElementById("makeRoute");
 
@@ -58,13 +59,37 @@
   const lat = position.coords.latitude;
   const lng = position.coords.longitude;
 
+  // 現在地へ移動
   map.setView([lat, lng], 16);
 
+  // ピン
   if (marker) {
     marker.setLatLng([lat, lng]);
   } else {
     marker = L.marker([lat, lng]).addTo(map);
   }
+
+  // 散歩時間（分）
+  const minutes = Number(document.getElementById("walkTime").value);
+
+  // 歩行距離（m）: 1分=80m
+  const distance = minutes * 80;
+
+  // 円の半径 = 距離 ÷ 2π
+  const radius = distance / (2 * Math.PI);
+
+  // 既存の円を消す
+  if (walkCircle) {
+    map.removeLayer(walkCircle);
+  }
+
+  // 円を描く
+  walkCircle = L.circle([lat, lng], {
+    radius: radius,
+    color: "green",
+    fillColor: "green",
+    fillOpacity: 0.2,
+  }).addTo(map);
 
   button.textContent = "ルートを作る";
 },
